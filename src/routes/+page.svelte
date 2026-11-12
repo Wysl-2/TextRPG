@@ -1,90 +1,73 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import type { Vector2 } from '#lib/viewport/types.ts';
-    import { Viewport } from '#lib/viewport/viewport.svelte.ts'
     import { Game } from '#lib/game/game.svelte.ts';
+    import WorldMap from '#lib/components/WorldMap.svelte';
+    import Campsite from '#lib/components/Campsite.svelte';
 
+    type GameView = 'map' | 'campsite';
 
-    let viewport = new Viewport()
-    viewport.enableGridAxis = true
-    let targetScale: number = viewport.scale;
-    
     let game = new Game();
 
-    
+    let view: GameView = $state('map');
 
+    const interval = setInterval(() => {
+        game.update(1);
+    }, 1000);
 
-
-    
-    function handleWheel(event: WheelEvent) {
-        const direction: number = event.deltaY > 0 ? -1 : 1
-        console.log(direction)
-        
-        const sensitivity: number = 10;
-        const newScale = viewport.scale + (direction * sensitivity);
-        
-        if(
-            newScale >= 10 &&
-            newScale <= 100
-        ) {
-            viewport.scale = newScale;
-        }
+    function openMap() {
+        view = 'map';
     }
-    
+
+    function openCampsite() {
+        view = 'campsite';
+    }
 </script>
 
-<svg
-        width={viewport.size.width}
-        height={viewport.size.height}
-        viewBox={`0 0 ${viewport.size.width} ${viewport.size.height}`}
-        on:wheel={handleWheel}
->
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Campsite tent icon">
-        <path d="M27 10L37 25M37 10L27 25" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-        <path fill="currentColor" fill-rule="evenodd" d="M32 16L59 54H5L32 16ZM32 35L20 54H44L32 35Z"/>
-    </svg>
+<div id="game-container">
+    <div id="game-content">
 
-    {#if viewport.enableGridAxis}
-    <!-- Horizontal Axis -->
-    {#each viewport.xAxisMarkings as marking}
-        <line
-            x1={marking.x}      
-            y1={marking.y - 5}
-            x2={marking.x}
-            y2={marking.y + 5}
-            stroke="black"
-        />
-    {/each}
-    <line
-            x1={viewport.horizontalAxis.start.x}
-            y1={viewport.horizontalAxis.start.y}
-            x2={viewport.horizontalAxis.end.x}
-            y2={viewport.horizontalAxis.end.y}
-            stroke="black"
-    />
+        <div id="controls">
+            <button onclick={openMap}>Map</button>
+            <button onclick={openCampsite}>Camp</button>
+        </div>
 
-    <!-- Vertical Axis -->
-    {#each viewport.yAxisMarkings as marking}
-        <line
-                x1={marking.x - 5}
-                y1={marking.y}
-                x2={marking.x + 5}
-                y2={marking.y}
-                stroke="black"
-        />
-    {/each}
-    <line
-            x1={viewport.verticalAxis.start.x}
-            y1={viewport.verticalAxis.start.y}
-            x2={viewport.verticalAxis.end.x}
-            y2={viewport.verticalAxis.end.y}
-            stroke="black"
-    />
-    {/if}
-    
-    <circle
-    cx={viewport.size.width / 2}
-    cy={viewport.size.height / 2}
-    r={10}
-    fill="orange"/>
-</svg>
+        <div id="game-view">
+            {#if view === 'map'}
+                <WorldMap />
+            {:else if view === 'campsite'}
+                <Campsite campsite={game.campsite} />
+            {/if}
+        </div>
+
+    </div>
+</div>
+
+<style>
+
+    :global(body) {
+        margin: 0;
+    }
+
+    #game-container {
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    #game-content {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #controls {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 5px;
+    }
+
+    #game-view {
+        width: 100%;
+    }
+</style>
